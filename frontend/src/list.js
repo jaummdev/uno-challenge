@@ -5,8 +5,12 @@ import ListItemText from "@mui/material/ListItemText";
 import { Button, TextField } from "@mui/material";
 import { styled } from "styled-components";
 import { useMutation, useQuery } from "@apollo/client";
-import { ADD_ITEM_MUTATION, GET_TODO_LIST } from "./queries";
-import { Delete, Edit } from "@mui/icons-material";
+import {
+  ADD_ITEM_MUTATION,
+  GET_TODO_LIST,
+  UPDATE_ITEM_MUTATION,
+} from "./queries";
+import { Delete, Edit, Check, Close } from "@mui/icons-material";
 import { useState } from "react";
 import { getOperationName } from "@apollo/client/utilities";
 
@@ -58,22 +62,35 @@ const Title = styled.div`
 
 export default function CheckboxList() {
   const [item, setItem] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
   const { data } = useQuery(GET_TODO_LIST);
 
   const [addItem] = useMutation(ADD_ITEM_MUTATION);
+  const [updateItem] = useMutation(UPDATE_ITEM_MUTATION);
 
+  /**
+   * Adiciona um novo item à lista
+   * @param {Event} event - O evento de submit do formulário
+   */
   const onSubmit = async (event) => {
     event.preventDefault();
-    await addItem({
-      variables: {
-        values: {
-          name: item,
+    if (!item.trim()) return; // Se o nome estiver em branco, não adiciona
+
+    try {
+      await addItem({
+        variables: {
+          values: {
+            name: item,
+          },
         },
-      },
-      awaitRefetchQueries: true,
-      refetchQueries: [getOperationName(GET_TODO_LIST)],
-    });
-    setItem("");
+        awaitRefetchQueries: true,
+        refetchQueries: [getOperationName(GET_TODO_LIST)],
+      });
+      setItem("");
+    } catch (error) {
+      console.error("Erro ao adicionar item:", error);
+    }
   };
 
   const onDelete = async (event) => {
@@ -81,14 +98,45 @@ export default function CheckboxList() {
     // Aqui você irá implementar a chamada para o backend de remoção de item
   };
 
-  const onUpdate = async (event) => {
-    console.log(onUpdate);
-    // Aqui você irá implementar a chamada para o backend de edição de item
+  /**
+   * Atualiza o nome do item
+   * @param {number} id - O id do item
+   */
+  const onUpdate = async (id) => {
+    if (!editName.trim()) return; // Se o nome estiver em branco, não atualiza
+
+    try {
+      await updateItem({
+        variables: {
+          values: {
+            id,
+            name: editName,
+          },
+        },
+        awaitRefetchQueries: true,
+        refetchQueries: [getOperationName(GET_TODO_LIST)],
+      });
+
+      setEditingId(null);
+      setEditName("");
+    } catch (error) {
+      console.error("Erro ao atualizar item:", error);
+    }
   };
 
   const onFilter = async (event) => {
     console.log(onFilter);
     // Aqui você irá implementar a chamada para o backend para fazer o filtro
+  };
+
+  /**
+   * Inicia o modo de edição do item
+   * @param {number} id - O id do item
+   * @param {string} currentName - O nome atual do item
+   */
+  const handleStartEdit = (id, currentName) => {
+    setEditingId(id);
+    setEditName(currentName);
   };
 
   return (
@@ -126,9 +174,10 @@ export default function CheckboxList() {
         <List sx={{ width: "100%" }}>
           <ContainerListItem>
             {data?.todoList?.map((value, index) => {
+              const isEditing = editingId === value.id; // Verifica se o item está sendo editado
               return (
                 <ListItem
-                  key={index}
+                  key={value.id}
                   disablePadding
                   sx={{
                     borderRadius: "5px",
@@ -137,9 +186,45 @@ export default function CheckboxList() {
                   }}
                 >
                   <ListItemButton dense>
-                    <ListItemText id={index} primary={value?.name} />
-                    <Edit onClick={onUpdate} />
-                    <Delete onClick={onDelete} />
+                    {isEditing ? (
+                      // Modo Edição
+                      <>
+                        <TextField
+                          value={editName}
+                          autoFocus
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              onUpdate(value.id);
+                            }
+                          }}
+                          sx={{ width: "100%" }}
+                        />
+                        <Check
+                          color="success"
+                          onClick={() => onUpdate(value.id)}
+                          sx={{ cursor: "pointer", marginLeft: 1 }}
+                        />
+                        <Close
+                          color="error"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditName("");
+                          }}
+                          sx={{ cursor: "pointer", marginLeft: 1 }}
+                        />
+                      </>
+                    ) : (
+                      // Modo Visualização
+                      <>
+                        <ListItemText id={index} primary={value?.name} />
+                        <Edit
+                          onClick={() => handleStartEdit(value.id, value.name)}
+                          sx={{ cursor: "pointer", marginLeft: 1 }}
+                        />
+                        <Delete onClick={onDelete} />
+                      </>
+                    )}
                   </ListItemButton>
                 </ListItem>
               );

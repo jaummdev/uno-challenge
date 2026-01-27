@@ -46,15 +46,32 @@ const resolvers = {
   },
   Mutation: {
     addItem: (_, { values: { name } }) => {
+      if (!name.trim()) return false; // Se o nome estiver em branco, não adiciona
+
       TODO_LIST.push({
         id: getRandomInt(),
         name,
       });
+
+      return true; // Respeitando o squema
     },
+
+    /**
+     * Atualiza o nome de um item existente
+     * @param {number} id - O id do item
+     * @param {string} name - O novo nome do item
+     */
     updateItem: (_, { values: { id, name } }) => {
-      // Aqui você irá implementar a edição do item
-      console.log(id, name);
+      if (!name.trim()) return false; // Se o nome estiver em branco, não atualiza
+
+      const itemIndex = TODO_LIST.findIndex((item) => item.id === id);
+
+      if (itemIndex === -1) return false;
+
+      TODO_LIST[itemIndex].name = name;
+      return true;
     },
+
     deleteItem: (_, { id }) => {
       // Aqui você irá implementar a remoção do item
       console.log(id);
