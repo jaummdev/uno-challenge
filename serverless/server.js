@@ -4,6 +4,9 @@ const { TODO_LIST } = require("./makeData");
 
 /**
  * Gera um número inteiro para utilizar de id
+ * PROBLEMA: O número gerado é aleatório, o que pode causar problemas duplicidade.
+ * SOLUÇÃO: User UUID para gerar o id. (Usando slice para reduzir o tamanho do id).
+ * Mantive da forma que estava seguir a regra de seguir o padrão já pré-estabelecido no projeto.
  */
 function getRandomInt() {
   return Math.floor(Math.random() * 999);
@@ -45,12 +48,27 @@ const resolvers = {
     },
   },
   Mutation: {
+    /**
+     * Adiciona um novo item à lista
+     * Regras: Não permite nomes vazios nem duplicados.
+     * @param {string} name - O nome do item
+     * @returns {boolean} true se o item foi adicionado com sucesso, false caso contrário
+     */
     addItem: (_, { values: { name } }) => {
-      if (!name.trim()) return false; // Se o nome estiver em branco, não adiciona
+      const cleanName = name.trim();
+      if (!cleanName) return false;
+
+      const exists = TODO_LIST.some(
+        (item) => item.name.toLowerCase() === cleanName.toLowerCase()
+      );
+
+      if (exists) {
+        throw new Error("Já existe um item com este nome.");
+      }
 
       TODO_LIST.push({
         id: getRandomInt(),
-        name,
+        name: cleanName,
       });
 
       return true; // Respeitando o squema
@@ -58,17 +76,25 @@ const resolvers = {
 
     /**
      * Atualiza o nome de um item existente
+     * Regras: Não permite nomes vazios nem duplicados.
      * @param {number} id - O id do item
      * @param {string} name - O novo nome do item
+     * @returns {boolean} true se o item foi atualizado com sucesso, false caso contrário
      */
     updateItem: (_, { values: { id, name } }) => {
-      if (!name.trim()) return false; // Se o nome estiver em branco, não atualiza
+      const cleanName = name.trim();
+      if (!cleanName) return false;
 
       const itemIndex = TODO_LIST.findIndex((item) => item.id === id);
-
       if (itemIndex === -1) return false;
 
-      TODO_LIST[itemIndex].name = name;
+      const isDuplicate = TODO_LIST.some(
+        (item) =>
+          item.name.toLowerCase() === cleanName.toLowerCase() && item.id !== id
+      );
+      if (isDuplicate) throw new Error("Nome já utilizado em outra tarefa.");
+
+      TODO_LIST[itemIndex].name = cleanName;
       return true;
     },
 

@@ -70,7 +70,10 @@ export default function CheckboxList() {
   const [updateItem] = useMutation(UPDATE_ITEM_MUTATION);
 
   /**
-   * Adiciona um novo item à lista
+   * Gerencia o envio do formulário para adicionar um novo item
+   * Realiza a validação de campo vazio e chama a mutação para adicionar o item
+   * Após o sucesso, limpa o campo de entrada e refaz a consulta à lista
+   * Em caso de erro, exibe o erro no console
    * @param {Event} event - O evento de submit do formulário
    */
   const onSubmit = async (event) => {
@@ -99,7 +102,9 @@ export default function CheckboxList() {
   };
 
   /**
-   * Atualiza o nome do item
+   * Gerencia a atualização do nome de um item
+   * Realiza a chamada à mutação para atualizar o item e refaz a consulta à lista
+   * Em caso de erro, exibe o erro no console
    * @param {number} id - O id do item
    */
   const onUpdate = async (id) => {
@@ -130,7 +135,8 @@ export default function CheckboxList() {
   };
 
   /**
-   * Inicia o modo de edição do item
+   * Gerencia o início do modo de edição de um item
+   * Define o id e o nome do item para edição
    * @param {number} id - O id do item
    * @param {string} currentName - O nome atual do item
    */
