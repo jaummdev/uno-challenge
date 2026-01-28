@@ -88,7 +88,7 @@ export default function CheckboxList() {
       setSnackbar({
         open: true,
         severity: "error",
-        message: "Erro ao adicionar tarefa",
+        message: error.message,
       });
     }
   };
@@ -118,7 +118,7 @@ export default function CheckboxList() {
       setSnackbar({
         open: true,
         severity: "error",
-        message: "Erro ao remover tarefa",
+        message: error.message,
       });
     }
   };
@@ -156,7 +156,7 @@ export default function CheckboxList() {
       setSnackbar({
         open: true,
         severity: "error",
-        message: "Erro ao atualizar tarefa",
+        message: error.message,
       });
     }
   };
@@ -209,7 +209,7 @@ export default function CheckboxList() {
       setSnackbar({
         open: true,
         severity: "error",
-        message: "Erro ao concluir a tarefa",
+        message: error.message,
       });
     }
   };
