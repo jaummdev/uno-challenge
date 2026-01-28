@@ -16,16 +16,19 @@ const typeDefs = `#graphql
   type Item {
     id: Int
     name: String
+    completed: Boolean
   }
 
   input ItemInput {
     id: Int
     name: String
+    completed: Boolean
   }
 
   input ItemFilter {
     id: Int
     name: String
+    completed: Boolean
   }
 
   type Query {
@@ -79,32 +82,45 @@ const resolvers = {
       TODO_LIST.push({
         id: getRandomInt(),
         name: cleanName,
+        completed: false,
       });
 
       return true; // Respeitando o squema
     },
 
     /**
-     * Atualiza o nome de um item existente
-     * Regras: Não permite nomes vazios nem duplicados.
+     * Atualiza um item existente (nome e/ou status completed)
+     * Regras: Não permite nomes vazios nem duplicados quando atualizando o nome.
+     * Permite atualizar apenas o status completed sem alterar o nome.
      * @param {number} id - O id do item
      * @param {string} name - O novo nome do item
+     * @param {boolean} completed - O status 'completed' do item
      * @returns {boolean} true se o item foi atualizado com sucesso, false caso contrário
      */
-    updateItem: (_, { values: { id, name } }) => {
-      const cleanName = name.trim();
-      if (!cleanName) return false;
-
+    updateItem: (_, { values: { id, name, completed } }) => {
       const itemIndex = TODO_LIST.findIndex((item) => item.id === id);
       if (itemIndex === -1) return false;
 
-      const isDuplicate = TODO_LIST.some(
-        (item) =>
-          item.name.toLowerCase() === cleanName.toLowerCase() && item.id !== id
-      );
-      if (isDuplicate) throw new Error("Nome já utilizado em outra tarefa.");
+      // Se name foi fornecido, valida e atualiza
+      if (name !== undefined && name !== null) {
+        const cleanName = name.trim();
+        if (!cleanName) return false;
 
-      TODO_LIST[itemIndex].name = cleanName;
+        const isDuplicate = TODO_LIST.some(
+          (item) =>
+            item.name.toLowerCase() === cleanName.toLowerCase() &&
+            item.id !== id
+        );
+        if (isDuplicate) throw new Error("Nome já utilizado em outra tarefa.");
+
+        TODO_LIST[itemIndex].name = cleanName;
+      }
+
+      // Se completed foi fornecido, atualiza
+      if (completed !== undefined && completed !== null) {
+        TODO_LIST[itemIndex].completed = completed;
+      }
+
       return true;
     },
 

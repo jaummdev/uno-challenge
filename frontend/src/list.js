@@ -2,7 +2,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import { Button, TextField } from "@mui/material";
+import { Button, Checkbox, TextField } from "@mui/material";
 import { styled } from "styled-components";
 import { useMutation, useQuery } from "@apollo/client";
 import {
@@ -164,6 +164,30 @@ export default function CheckboxList() {
   };
 
   /**
+   * Alterna o status completed de um item
+   * Realiza a chamada à mutação para atualizar o status 'completed' do item
+   * Em caso de erro, exibe o erro no console
+   * @param {number} id - O id do item
+   * @param {boolean} currentCompleted - O status atual de 'completed' do item
+   */
+  const onToggleCompleted = async (id, currentCompleted) => {
+    try {
+      await updateItem({
+        variables: {
+          values: {
+            id,
+            completed: !currentCompleted,
+          },
+        },
+        awaitRefetchQueries: true,
+        refetchQueries: [getOperationName(GET_TODO_LIST)],
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar status do item:", error);
+    }
+  };
+
+  /**
    * Gerencia o início do modo de edição de um item
    * Define o id e o nome do item para edição
    * @param {number} id - O id do item
@@ -256,7 +280,22 @@ export default function CheckboxList() {
                     ) : (
                       // Modo Visualização
                       <>
-                        <ListItemText id={index} primary={value?.name} />
+                        <Checkbox
+                          checked={!!value?.completed}
+                          onChange={() =>
+                            onToggleCompleted(value.id, value.completed)
+                          }
+                        />
+                        <ListItemText
+                          id={index}
+                          primary={value?.name}
+                          sx={{
+                            textDecoration: value?.completed
+                              ? "line-through"
+                              : "none",
+                            opacity: value?.completed ? 0.5 : 1,
+                          }}
+                        />
                         <Edit
                           onClick={() => handleStartEdit(value.id, value.name)}
                           sx={{ cursor: "pointer", marginLeft: 1 }}

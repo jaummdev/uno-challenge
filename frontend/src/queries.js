@@ -5,6 +5,7 @@ export const GET_TODO_LIST = gql`
     todoList(filter: $filter) {
       id
       name
+      completed
     }
   }
 `;
