@@ -2,8 +2,15 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import { Button, Checkbox, TextField } from "@mui/material";
-import { styled } from "styled-components";
+import {
+  Button,
+  Checkbox,
+  Snackbar,
+  Stack,
+  TextField,
+  Alert,
+  IconButton,
+} from "@mui/material";
 import { useMutation, useQuery } from "@apollo/client";
 import {
   ADD_ITEM_MUTATION,
@@ -11,61 +18,39 @@ import {
   UPDATE_ITEM_MUTATION,
   DELETE_ITEM_MUTATION,
 } from "./queries";
-import { Delete, Edit, Check, Close } from "@mui/icons-material";
+import {
+  Delete,
+  Edit,
+  Check,
+  Close,
+  Add,
+  FilterAlt,
+} from "@mui/icons-material";
 import { useState } from "react";
 import { getOperationName } from "@apollo/client/utilities";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ContainerTop = styled.form`
-  display: flex;
-  background-color: #dcdcdc;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10px;
-  gap: 10px;
-  border-radius: 5px;
-`;
-
-const ContainerList = styled.div`
-  display: flex;
-  width: 600px;
-  background-color: #dcdcdc;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10px;
-  gap: 10px;
-  border-radius: 5px;
-`;
-const ContainerListItem = styled.div`
-  background-color: #efefef;
-  padding: 10px;
-  border-radius: 5px;
-  max-height: 400px;
-  overflow: auto;
-`;
-
-const ContainerButton = styled.div`
-  display: flex;
-  justify-content: space-around;
-  gap: 10px;
-`;
-
-const Title = styled.div`
-  font-weight: bold;
-  font-size: 28px;
-`;
+import {
+  Container,
+  ContainerTop,
+  ContainerList,
+  ContainerListItem,
+  Title,
+  EmptyStateContainer,
+  EmptyStateIcon,
+  EmptyStateText,
+  EmptyStateSubtext,
+} from "./styles/list.styles";
 
 export default function CheckboxList() {
   const [item, setItem] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const { data, refetch } = useQuery(GET_TODO_LIST);
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: "success",
+    message: "",
+  });
 
   const [addItem] = useMutation(ADD_ITEM_MUTATION);
   const [updateItem] = useMutation(UPDATE_ITEM_MUTATION);
@@ -93,8 +78,18 @@ export default function CheckboxList() {
         refetchQueries: [getOperationName(GET_TODO_LIST)],
       });
       setItem("");
+      setSnackbar({
+        open: true,
+        severity: "success",
+        message: "Tarefa adicionada com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao adicionar item:", error);
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message: "Erro ao adicionar tarefa",
+      });
     }
   };
 
@@ -113,8 +108,18 @@ export default function CheckboxList() {
         awaitRefetchQueries: true,
         refetchQueries: [getOperationName(GET_TODO_LIST)],
       });
+      setSnackbar({
+        open: true,
+        severity: "success",
+        message: "Tarefa removida com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao remover item:", error);
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message: "Erro ao remover tarefa",
+      });
     }
   };
 
@@ -141,8 +146,18 @@ export default function CheckboxList() {
 
       setEditingId(null);
       setEditName("");
+      setSnackbar({
+        open: true,
+        severity: "success",
+        message: "Tarefa atualizada com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao atualizar item:", error);
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message: "Erro ao atualizar tarefa",
+      });
     }
   };
 
@@ -182,8 +197,20 @@ export default function CheckboxList() {
         awaitRefetchQueries: true,
         refetchQueries: [getOperationName(GET_TODO_LIST)],
       });
+      setSnackbar({
+        open: true,
+        severity: currentCompleted ? "warning" : "success",
+        message: currentCompleted
+          ? "Tarefa marcada como não completada"
+          : "Tarefa marcada como completada",
+      });
     } catch (error) {
-      console.error("Erro ao atualizar status do item:", error);
+      console.error("Erro ao concluir a tarefa:", error);
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message: "Erro ao concluir a tarefa",
+      });
     }
   };
 
@@ -200,116 +227,168 @@ export default function CheckboxList() {
 
   return (
     <Container>
+      <Title>TODO LIST</Title>
       <ContainerList>
-        <Title>TODO LIST</Title>
         <ContainerTop onSubmit={onSubmit}>
           <TextField
             id="item"
             label="Digite aqui"
             value={item}
             type="text"
-            variant="standard"
+            variant="outlined"
+            fullWidth
+            InputProps={{
+              sx: {
+                borderRadius: "16px",
+              },
+            }}
             onChange={(e) => setItem(e?.target?.value)}
           />
-          <ContainerButton>
+          <Stack direction="row" spacing={1}>
             <Button
               variant="contained"
-              sx={{ width: "100%" }}
-              color="info"
-              onClick={onFilter}
-            >
-              Filtrar
-            </Button>
-            <Button
-              variant="contained"
-              sx={{ width: "100%" }}
               color="success"
               type="submit"
+              startIcon={<Add />}
+              disableElevation
+              sx={{ borderRadius: "16px", padding: "0 24px" }}
             >
               Salvar
             </Button>
-          </ContainerButton>
+            <Button
+              variant="text"
+              color="info"
+              startIcon={<FilterAlt />}
+              onClick={onFilter}
+              sx={{ borderRadius: "16px", padding: "0 16px" }}
+            >
+              Filtrar
+            </Button>
+          </Stack>
         </ContainerTop>
-        <List sx={{ width: "100%" }}>
+        <List>
           <ContainerListItem>
-            {data?.todoList?.map((value, index) => {
-              const isEditing = editingId === value.id; // Verifica se o item está sendo editado
-              return (
-                <ListItem
-                  key={value.id}
-                  disablePadding
-                  sx={{
-                    borderRadius: "5px",
-                    marginTop: "5px",
-                    marginBottom: "5px",
-                  }}
-                >
-                  <ListItemButton dense>
-                    {isEditing ? (
-                      // Modo Edição
-                      <>
-                        <TextField
-                          value={editName}
-                          autoFocus
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              onUpdate(value.id);
+            {!data?.todoList || data?.todoList?.length === 0 ? (
+              <EmptyStateContainer>
+                <EmptyStateIcon />
+                <EmptyStateText>Nenhuma tarefa encontrada</EmptyStateText>
+                <EmptyStateSubtext>
+                  Adicione uma nova tarefa acima ou ajuste o filtro
+                </EmptyStateSubtext>
+              </EmptyStateContainer>
+            ) : (
+              data.todoList.map((value, index) => {
+                const isEditing = editingId === value.id; // Verifica se o item está sendo editado
+
+                return (
+                  <ListItem key={value.id} disablePadding>
+                    <ListItemButton
+                      dense
+                      sx={{
+                        borderRadius: "8px",
+                        padding: "4px 4px 4px 0",
+                      }}
+                    >
+                      {isEditing ? (
+                        // Modo Edição
+                        <>
+                          <TextField
+                            value={editName}
+                            autoFocus
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                onUpdate(value.id);
+                              }
+                              if (e.key === "Escape") {
+                                setEditingId(null);
+                                setEditName("");
+                              }
+                            }}
+                            fullWidth
+                            sx={{ margin: "0 4px" }}
+                            InputProps={{
+                              sx: {
+                                borderRadius: "16px",
+                              },
+                            }}
+                          />
+                          <Stack direction="row" spacing={0.5}>
+                            <IconButton
+                              color="success"
+                              onClick={() => onUpdate(value.id)}
+                            >
+                              <Check fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              color="error"
+                              onClick={() => {
+                                setEditingId(null);
+                                setEditName("");
+                              }}
+                            >
+                              <Close fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </>
+                      ) : (
+                        // Modo Visualização
+                        <>
+                          <Checkbox
+                            color="success"
+                            checked={!!value?.completed}
+                            onChange={() =>
+                              onToggleCompleted(value.id, value.completed)
                             }
-                            if (e.key === "Escape") {
-                              setEditingId(null);
-                              setEditName("");
-                            }
-                          }}
-                          sx={{ width: "100%" }}
-                        />
-                        <Check
-                          color="success"
-                          onClick={() => onUpdate(value.id)}
-                          sx={{ cursor: "pointer", marginLeft: 1 }}
-                        />
-                        <Close
-                          color="error"
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditName("");
-                          }}
-                          sx={{ cursor: "pointer", marginLeft: 1 }}
-                        />
-                      </>
-                    ) : (
-                      // Modo Visualização
-                      <>
-                        <Checkbox
-                          checked={!!value?.completed}
-                          onChange={() =>
-                            onToggleCompleted(value.id, value.completed)
-                          }
-                        />
-                        <ListItemText
-                          id={index}
-                          primary={value?.name}
-                          sx={{
-                            textDecoration: value?.completed
-                              ? "line-through"
-                              : "none",
-                            opacity: value?.completed ? 0.5 : 1,
-                          }}
-                        />
-                        <Edit
-                          onClick={() => handleStartEdit(value.id, value.name)}
-                          sx={{ cursor: "pointer", marginLeft: 1 }}
-                        />
-                        <Delete onClick={() => onDelete(value.id)} />
-                      </>
-                    )}
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
+                          />
+                          <ListItemText
+                            id={index}
+                            primary={value?.name}
+                            sx={{
+                              textDecoration: value?.completed
+                                ? "line-through"
+                                : "none",
+                              opacity: value?.completed ? 0.5 : 1,
+                            }}
+                          />
+                          <Stack direction="row" spacing={0.5}>
+                            <IconButton
+                              color="default"
+                              onClick={() =>
+                                handleStartEdit(value.id, value.name)
+                              }
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              color="error"
+                              onClick={() => onDelete(value.id)}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </>
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })
+            )}
           </ContainerListItem>
         </List>
       </ContainerList>
+
+      {/* Snackbar para exibir mensagens de sucesso ou erro */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        onClose={() =>
+          setSnackbar({ open: false, severity: "success", message: "" })
+        }
+      >
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </Container>
   );
 }
