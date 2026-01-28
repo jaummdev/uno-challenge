@@ -9,6 +9,7 @@ import {
   ADD_ITEM_MUTATION,
   GET_TODO_LIST,
   UPDATE_ITEM_MUTATION,
+  DELETE_ITEM_MUTATION,
 } from "./queries";
 import { Delete, Edit, Check, Close } from "@mui/icons-material";
 import { useState } from "react";
@@ -68,6 +69,7 @@ export default function CheckboxList() {
 
   const [addItem] = useMutation(ADD_ITEM_MUTATION);
   const [updateItem] = useMutation(UPDATE_ITEM_MUTATION);
+  const [deleteItem] = useMutation(DELETE_ITEM_MUTATION);
 
   /**
    * Gerencia o envio do formulário para adicionar um novo item
@@ -96,9 +98,24 @@ export default function CheckboxList() {
     }
   };
 
-  const onDelete = async (event) => {
-    console.log(onDelete);
-    // Aqui você irá implementar a chamada para o backend de remoção de item
+  /**
+   * Gerencia a remoção de um item da lista
+   * Realiza a chamada à mutação para remover o item e refaz a consulta à lista
+   * Em caso de erro, exibe o erro no console
+   * @param {number} id - O id do item
+   */
+  const onDelete = async (id) => {
+    try {
+      await deleteItem({
+        variables: {
+          id,
+        },
+        awaitRefetchQueries: true,
+        refetchQueries: [getOperationName(GET_TODO_LIST)],
+      });
+    } catch (error) {
+      console.error("Erro ao remover item:", error);
+    }
   };
 
   /**
@@ -228,7 +245,7 @@ export default function CheckboxList() {
                           onClick={() => handleStartEdit(value.id, value.name)}
                           sx={{ cursor: "pointer", marginLeft: 1 }}
                         />
-                        <Delete onClick={onDelete} />
+                        <Delete onClick={() => onDelete(value.id)} />
                       </>
                     )}
                   </ListItemButton>

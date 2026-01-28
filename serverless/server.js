@@ -98,9 +98,20 @@ const resolvers = {
       return true;
     },
 
+    /**
+     * Remove um item da lista
+     * Regras: Não permite remover um item que não existe.
+     * @param {number} id - O id do item
+     * @returns {boolean} true se o item foi removido com sucesso, false caso contrário
+     */
     deleteItem: (_, { id }) => {
-      // Aqui você irá implementar a remoção do item
-      console.log(id);
+      const itemIndex = TODO_LIST.findIndex((item) => item.id === id);
+
+      if (itemIndex === -1) return false;
+
+      TODO_LIST.splice(itemIndex, 1);
+
+      return true;
     },
   },
 };
