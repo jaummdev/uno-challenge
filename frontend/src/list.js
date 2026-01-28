@@ -65,7 +65,7 @@ export default function CheckboxList() {
   const [item, setItem] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
-  const { data } = useQuery(GET_TODO_LIST);
+  const { data, refetch } = useQuery(GET_TODO_LIST);
 
   const [addItem] = useMutation(ADD_ITEM_MUTATION);
   const [updateItem] = useMutation(UPDATE_ITEM_MUTATION);
@@ -146,9 +146,21 @@ export default function CheckboxList() {
     }
   };
 
-  const onFilter = async (event) => {
-    console.log(onFilter);
-    // Aqui você irá implementar a chamada para o backend para fazer o filtro
+  /**
+   * Realiza a filtragem dos itens chamando o backend.
+   * Utiliza o valor atual do input ('item') como critério de busca.
+   * Se o input estiver vazio, o backend retornará a lista completa.
+   */
+  const onFilter = async () => {
+    try {
+      await refetch({
+        filter: {
+          name: item,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao filtrar item:", error);
+    }
   };
 
   /**
@@ -219,6 +231,10 @@ export default function CheckboxList() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               onUpdate(value.id);
+                            }
+                            if (e.key === "Escape") {
+                              setEditingId(null);
+                              setEditName("");
                             }
                           }}
                           sx={{ width: "100%" }}

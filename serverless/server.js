@@ -5,7 +5,7 @@ const { TODO_LIST } = require("./makeData");
 /**
  * Gera um número inteiro para utilizar de id
  * PROBLEMA: O número gerado é aleatório, o que pode causar problemas duplicidade.
- * SOLUÇÃO: User UUID para gerar o id. (Usando slice para reduzir o tamanho do id).
+ * SOLUÇÃO: Usar UUID para gerar o id. (Usando slice para reduzir o tamanho do id).
  * Mantive da forma que estava seguir a regra de seguir o padrão já pré-estabelecido no projeto.
  */
 function getRandomInt() {
@@ -41,9 +41,19 @@ const typeDefs = `#graphql
 
 const resolvers = {
   Query: {
+    /**
+     * Retorna a lista de itens
+     * Regras: Se o filtro for fornecido, filtra os itens pelo nome.
+     * @param {object} filter - O filtro para filtrar os itens
+     * @returns {array} A lista de itens
+     */
     todoList: (_, { filter }) => {
-      // Aqui você irá implementar o filtro dos itens
-      console.log(filter);
+      if (filter && filter.name) {
+        return TODO_LIST.filter((item) =>
+          item.name.toLowerCase().includes(filter.name.toLowerCase())
+        );
+      }
+
       return TODO_LIST;
     },
   },
